@@ -4,8 +4,8 @@
 
 char * encode (char * inputString)
 {
-	int len = strlen(inputString);
-	char set64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
+    int len = strlen(inputString);
+    char set64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; 
 
     char *ans = (char *) malloc(2000 * sizeof(char)); 
 
