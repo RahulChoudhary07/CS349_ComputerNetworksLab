@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
 	sckt server; //struct is part of socket.c
 	char response; 
 	int clientSocket = socket(AF_INET,SOCK_STREAM,0); //AF_NET is IPv4, SOCK_STREAM means TCP - socket is created
-	char buffer[1501]; //buffer to store sending value
+	char buffer[1600]; //buffer to store sending value
 	if(clientSocket == -1){ //socket couldn't be created
 		printf("SOCKET FAILURE\n");
 		exit(0);
@@ -51,8 +51,7 @@ int main(int argc, char *argv[]){
 		//scanf("%c", &response);              
 		getchar();
 		printf("What message do you want to send?\n");
-		//bzero(msg, 1500);
-		bzero(buffer, 1501); 
+		bzero(buffer, 1600); 
 		int i = 0;
 		for(;;){ //maximum buffer size is 1500
 			scanf("%c", &response);        //input msg      
@@ -67,7 +66,7 @@ int main(int argc, char *argv[]){
 		strcpy(buffer+1, encode(buffer)); //// append encoded value of msg after msg typer
 		buffer[0] =  '1'; //set msg type as 1
 		write(clientSocket, buffer, strlen(buffer)); //write to socket
-		bzero(buffer, 1501);
+		bzero(buffer, 1600);
 		int received = read(clientSocket, buffer, 50); //recieve acknowledgement from server
 		strcpy(buffer+1, decode(buffer+1)); //decode msg
 

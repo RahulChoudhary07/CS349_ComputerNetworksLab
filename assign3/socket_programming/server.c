@@ -12,9 +12,9 @@ void clientController(int clientfd,struct sockaddr_in *client){
 	printf("New client just connected!!\n");
 	char *ip = inet_ntoa(client->sin_addr); //ip address of client
 	int port = client->sin_port; // port of client
-	char buffer[1501]; //buffer to store sending value
+	char buffer[1600]; //buffer to store sending value
 	while(1){ //while client doesnt send close connection request, wait for msg from client
-		bzero(buffer,1501); 
+		bzero(buffer,1600); 
 		int st = read(clientfd,buffer,1501); //read msg from socket
 		if(buffer[0]=='3'){ //first char of msg is msg type. 3 means close connection
 			printf("\tConnection Closed\n");
