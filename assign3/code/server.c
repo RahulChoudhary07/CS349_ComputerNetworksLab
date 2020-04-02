@@ -1,5 +1,5 @@
-#include "decoder.c"
-#include "encoder.c"
+#include "base_64_decoder.c"
+#include "base_64_encoder.c"
 #include <unistd.h> 
 #include <stdio.h> 
 #include <sys/socket.h> 
@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <string.h> 
 
-void clientController(int clientfd,struct sockaddr_in *client)
+void recvAndAck(int c_fd,struct sockaddr_in *client)
 {
 	char *ip = inet_ntoa(client->sin_addr); //ip address of client
 	int port = client->sin_port; // port of client
@@ -20,7 +20,7 @@ void clientController(int clientfd,struct sockaddr_in *client)
 	while(1)
 	{
 		bzero(buffer,1500); 
-		int st = read(clientfd,buffer,1500); //read msg from socket
+		int st = read(c_fd,buffer,1500); //read msg from socket
 		
 		//first char of msg is msg type. 3 refers to close connection
 		if(buffer[0]=='3')
@@ -34,13 +34,13 @@ void clientController(int clientfd,struct sockaddr_in *client)
 			bzero(buffer,1500);
 			buffer[0]='2'; //write to buffer. 2 refers to acknowledgement
 			strcpy(buffer+1,encode("ACK")); //append encoded value of "ACK" after msg type
-			write(clientfd,buffer,strlen(buffer)); //send acknowledgement
+			write(c_fd,buffer,strlen(buffer)); //send acknowledgement
 		}
 		else
 			break;
 	}
 
-	close(clientfd); //close connection
+	close(c_fd); //close connection
 	printf("\nCLEINT CONNECTION (%s : %d) CLOSED\n",ip,port);
 	exit(0);
 }
@@ -71,10 +71,10 @@ int main(int argc, char *argv[])
 	//listen to the current socket
 	if(listen(serverSocket,20) == -1)
 	{
-		printf("\nTOO MANY CLIENTS\n");
+		printf("\nLISTEN FAILED\n");
 		exit(0);
 	}
-	printf("SERVER IS ON\n");
+	printf("SERVER WORKING\n");
 	fflush(stdout);
 	while(1)
 	{
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		// client connection was not made
 		if(clientSocket < 0)
 		{ 
-			printf("\nSERVER COULDN'T ACCEPT THE CLIENT\n");
+			printf("\nSERVER-CLIENT CONNECTION COULD NOT BE ESTABLISHED\n");
 			exit(0);
 		}
 		int status = fork(); //fork to create a child process to handle this client, so that multiple clients can be handled concurrently
@@ -91,12 +91,12 @@ int main(int argc, char *argv[])
 		{
 			// error while creating child process
 	 		case -1:
-				printf("\nCOULDN'T CREATE CONNECTION - TOO MANY CONNECTIONS\n");
+				printf("\nCOULDN'T ESTABLISH CONNECTION\n");
 				break;
 			//child process
 			case 0:
 				close(serverSocket); //server socket is handled by parent process
-				clientController(clientSocket,&client); // this functions handles a client
+				recvAndAck(clientSocket,&client); // this functions handles a client
 				break;
 			//parent process 
 			default:

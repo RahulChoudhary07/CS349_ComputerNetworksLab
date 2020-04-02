@@ -1,5 +1,5 @@
-#include "decoder.c"
-#include "encoder.c"
+#include "base_64_decoder.c"
+#include "base_64_encoder.c"
 #include <unistd.h> 
 #include <stdio.h> 
 #include <sys/socket.h> 
@@ -8,12 +8,40 @@
 #include <arpa/inet.h>
 #include <string.h> 
 
-//struct is part of socket.c
-#define sckt struct sockaddr_in
+
+void getInput(char buffer[])
+{
+	char inp;
+	printf("Write message to send\n");
+	bzero(buffer, 1500); 
+	int i = 0;
+	
+	//maximum input size is 1000
+	while(1)
+	{
+		scanf("%c", &inp); //read message character by character    
+		if(inp == '\n') 
+			break;
+		if (i == 1000)
+		{
+			printf("Only first 1000 characters of message are being sent\n");
+			break;
+		}
+		buffer[i++] = inp; 
+	}
+}
+
+void closeConnection(char buffer[], int clientSocket)
+{
+	buffer[0] =  '3'; 	 //set msg type
+	strcpy(buffer+1, encode("connection_close")); // append encoded value of "connection_close" after msg type
+	printf("CONNCECTION CLOSED\n"); 
+	write(clientSocket, buffer, strlen(buffer)); // write in socket
+}
 
 int main(int argc, char *argv[])
 {
-	sckt server; 
+	struct sockaddr_in server; 
 	char inp; //to read user input character by character 
 	int clientSocket = socket(AF_INET,SOCK_STREAM,0); //AF_NET is for IPv4, SOCK_STREAM indicates that TCP socket is created
 	char buffer[1500]; //buffer to store recieving and modified sending value
@@ -36,7 +64,7 @@ int main(int argc, char *argv[])
 
 	int serverPort = atoi(argv[2]); // server port, inputted by user
 	server.sin_port = htons(serverPort); 
-	socklen_t length = sizeof(sckt); 
+	socklen_t length = sizeof(struct sockaddr_in); 
 
 	// connection establishment failure
 	if(connect(clientSocket,(struct sockaddr *) &server, length) == -1)
@@ -48,37 +76,19 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		
-		printf("Send message?\nPress 'y' for YES or anything else for NO and press enter: \n");
+		printf("Send message?\nPress 'y' for YES or any other key for NO and press enter: \n");
 		scanf("%c", &inp);
 
 		//n impies send close connection request to server
 		if(inp != 'y')
 		{
-			buffer[0] =  '3'; 	 //set msg type
-			strcpy(buffer+1, encode("connection_close")); // append encoded value of "connection_close" after msg type
-			printf("CONNCECTION CLOSED\n"); 
-			write(clientSocket, buffer, strlen(buffer)); // write in socket
+			closeConnection(buffer,clientSocket);
 			break; 
 		}
 
 		getchar();
-		printf("Write message to send\n");
-		bzero(buffer, 1500); 
-		int i = 0;
-		
-		//maximum input size is 1000
-		while(1)
-		{
-			scanf("%c", &inp); //read message character by character    
-			if(inp == '\n') 
-				break;
-			if (i == 1000)
-			{
-				printf("Only first 1000 characters of message are being sent\n");
-				break;
-			}
-			buffer[i++] = inp; 
-		}
+		getInput(buffer);
+
 		strcpy(buffer+1, encode(buffer)); // append encoded value of msg after msg type
 		buffer[0] =  '1'; //set msg type as 1
 		write(clientSocket, buffer, strlen(buffer)); //write to socket
